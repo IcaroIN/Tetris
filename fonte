@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Tetris</title>
+	<style>
+		body {
+            background-color: #333333;
+            color: #FFFFFF;
+			display: flex;
+    		align-items: center;
+    		justify-content: center;
+			height: 100vh;
+			margin:0px;
+			padding: 0px;
+			
+        }
+
+        #Pontuação #Velocidade {
+            display: inline-block;
+        }
+
+        div {
+            font-size: 25px;
+            font-weight: bold;
+            font-family: monospace;
+            text-align: center;
+        	}
+
+	
+    </style>
+
+	<div>
+		<div class="title">
+			<h3>Tetris</h3><hr>
+			
+		</div>
+</head>
+<body>
+		<canvas id="tela" width="200" height="400" ></canvas>
+		<div>
+			<p>
+				Pontuação: <span id="pontuação"></span>
+			</p>
+			<p>
+				Velociddade: <span id="velocidade"></span>
+			</p>
+		</div>
+	<script>
+
+		var points = document.getElementById('pontuação')
+		var contador = 0
+
+		var speed = document.getElementById('velocidade')
+		var contSpeed = 0
+
+		//Fundo Dinâmico
+
+		let angulo_fundo = Math.random() * 360
+        let ton_fundo = Math.random() * 360
+        setInterval(() => {
+            document.body.style.background = `linear-gradient(
+                ${angulo_fundo}deg, 
+                hsl(${ton_fundo},100%,50%),
+                hsl(${ton_fundo},100%,0%)
+            )`
+            angulo_fundo += Math.random()
+            ton_fundo += Math.random()
+        }, 20);
+
+	
+
+	
+	// Rotina principal
+	//formato das pecas 0=vazio 1=cheio
+	const I = [
+		[
+			[0, 0, 0, 0],
+			[1, 1, 1, 1],
+			[0, 0, 0, 0],
+			[0, 0, 0, 0],
+		],
+		[
+			[0, 0, 1, 0],
+			[0, 0, 1, 0],
+			[0, 0, 1, 0],
+			[0, 0, 1, 0],
+		],
+		[
+			[0, 0, 0, 0],
+			[0, 0, 0, 0],
+			[1, 1, 1, 1],
+			[0, 0, 0, 0],
+		],
+		[
+			[0, 1, 0, 0],
+			[0, 1, 0, 0],
+			[0, 1, 0, 0],
+			[0, 1, 0, 0],
+		]
+	];
+	
+	const J = [
+		[
+			[1, 0, 0],
+			[1, 1, 1],
+			[0, 0, 0]
+		],
+		[
+			[0, 1, 1],
+			[0, 1, 0],
+			[0, 1, 0]
+		],
+		[
+			[0, 0, 0],
+			[1, 1, 1],
+			[0, 0, 1]
+		],
+		[
+			[0, 1, 0],
+			[0, 1, 0],
+			[1, 1, 0]
+		]
+	];
+	
+	const L = [
+		[
+			[0, 0, 1],
+			[1, 1, 1],
+			[0, 0, 0]
+		],
+		[
+			[0, 1, 0],
+			[0, 1, 0],
+			[0, 1, 1]
+		],
+		[
+			[0, 0, 0],
+			[1, 1, 1],
+			[1, 0, 0]
+		],
+		[
+			[1, 1, 0],
+			[0, 1, 0],
+			[0, 1, 0]
+		]
+	];
+	
+	const O = [
+		[
+			[0, 0, 0, 0],
+			[0, 1, 1, 0],
+			[0, 1, 1, 0],
+			[0, 0, 0, 0],
+		]
+	];
+	
+	const S = [
+		[
+			[0, 1, 1],
+			[1, 1, 0],
+			[0, 0, 0]
+		],
+		[
+			[0, 1, 0],
+			[0, 1, 1],
+			[0, 0, 1]
+		],
+		[
+			[0, 0, 0],
+			[0, 1, 1],
+			[1, 1, 0]
+		],
+		[
+			[1, 0, 0],
+			[1, 1, 0],
+			[0, 1, 0]
+		]
+	];
+	
+	const T = [
+		[
+			[0, 1, 0],
+			[1, 1, 1],
+			[0, 0, 0]
+		],
+		[
+			[0, 1, 0],
+			[0, 1, 1],
+			[0, 1, 0]
+		],
+		[
+			[0, 0, 0],
+			[1, 1, 1],
+			[0, 1, 0]
+		],
+		[
+			[0, 1, 0],
+			[1, 1, 0],
+			[0, 1, 0]
+		]
+	];
+	
+	const Z = [
+		[
+			[1, 1, 0],
+			[0, 1, 1],
+			[0, 0, 0]
+		],
+		[
+			[0, 0, 1],
+			[0, 1, 1],
+			[0, 1, 0]
+		],
+		[
+			[0, 0, 0],
+			[1, 1, 0],
+			[0, 1, 1]
+		],
+		[
+			[0, 1, 0],
+			[1, 1, 0],
+			[1, 0, 0]
+		]
+	];
+	const X = [
+		[
+			[1,0,1],
+			[1,1,1],
+			[0,0,0]
+		],
+		[
+			[1, 1, 0],
+			[1, 0, 0],
+			[1, 1, 0]
+		],
+		[
+			[1, 1, 1],
+			[1, 0, 1],
+			[0, 0, 0]
+		],
+		[
+			[0, 1, 1],
+			[0, 0, 1],
+			[0, 1, 1]
+		]
+	]
+	//cores das pecas
+	const PECAS = [
+		[Z, "green"],
+		[S, "blue"],
+		[T, "yellow"],
+		[O, "red"],
+		[L, "purple"],
+		[I, "pink"],
+		[J, "black"],
+		[X, "cyan"]
+	];
+	//tabuleiro
+	const LINHA = 20;
+	const COLUNA = 10;
+	const TAMANHO = 20;
+	const VAGO = "white";
+	
+	var peca;
+	var tabuleiro = [];
+	
+	var inicioDescida;
+	var fimDeJogo = false;
+	
+	const tela = document.getElementById("tela");
+	const c = tela.getContext("2d");
+
+	
+
+	
+	onkeydown = controlarPeca;
+	
+	iniciarTabuleiro();
+	
+	desenharTabuleiro();
+	
+	gerarPeca();
+	
+	inicioDescida = Date.now();
+	
+	descerPeca();
+
+	
+	
+	// Sub-rotinas (funções)
+	function reset(){
+		iniciarTabuleiro();
+	
+	desenharTabuleiro();
+	
+	gerarPeca();
+	
+	inicioDescida = Date.now();
+	
+	descerPeca();
+
+	  }
+
+	
+		function audiojogo(){
+			const audiojogo = new Audio('tetrisom.mp3');
+			audiojogo.play();
+			audiojogo.loop=false;
+		}
+		
+		function iniciarTabuleiro() {
+			for (var i = 0; i < LINHA; i++) {
+				tabuleiro[i] = [];
+				
+				for (var j = 0; j < COLUNA; j++) {
+				tabuleiro[i][j] = VAGO;
+			}
+		}
+	}
+
+	
+	function desenharTabuleiro(){
+		const audiojogo = new Audio('tetrisom.mp3');
+		audiojogo.play();
+		audiojogo.loop=true;
+		for (var i = 0; i < LINHA; i++) {
+			for (var j = 0; j < COLUNA; j++) {
+				desenharQuadrado(j, i, tabuleiro[i][j]);
+			}
+		}
+	}
+	//quadriculado
+	function desenharQuadrado(x, y, cor){
+		c.fillStyle = cor;
+		c.fillRect(x*TAMANHO, y*TAMANHO, TAMANHO, TAMANHO);
+	 var gradient = c.createLinearGradient(0,0,170,0);
+	 gradient.addColorStop('0','magenta')
+	 gradient.addColorStop('0.5','blue')
+	 gradient.addColorStop('1.0','red')
+		c.strokeStyle = gradient;
+		c.strokeRect(x*TAMANHO, y*TAMANHO, TAMANHO, TAMANHO);
+	}
+	
+	function gerarPeca(){
+		var r = Math.floor(Math.random() * PECAS.length);
+		
+		peca = {
+			tetramino : PECAS[r][0],
+			cor : PECAS[r][1],
+			tetraminoN : 0,
+			tetraminoAtivo : [[]],
+			x : 3,
+			y : -2
+			
+		};
+		
+		peca.tetraminoAtivo = peca.tetramino[peca.tetraminoN];
+	}
+	
+	function descerPeca(){
+		var agora = Date.now();
+		var delta = agora - inicioDescida;
+		
+		if (delta >= 200 ) {
+			contSpeed = delta
+			speed.innerHTML = contSpeed
+			moverAbaixo();
+			inicioDescida = Date.now();
+		}
+		
+		if (!fimDeJogo) {
+			requestAnimationFrame(descerPeca);
+		}
+	}
+	
+	function moverAbaixo(){
+		if (!colisao(0, 1, peca.tetraminoAtivo)) {
+			apagarPeca();
+			peca.y++;
+			desenharPeca();
+		} else {
+			travarPeca();
+			gerarPeca();
+		}
+		
+	}
+	
+	function moverDireita(){
+		if (!colisao(1, 0, peca.tetraminoAtivo)) {
+			apagarPeca();
+			peca.x++;
+			desenharPeca();
+		}
+	}
+	
+	function moverEsquerda(){
+		if (!colisao(-1, 0, peca.tetraminoAtivo)) {
+			apagarPeca();
+			peca.x--;
+			desenharPeca();
+		}
+	}
+	
+	function colisao(x, y, p){
+		for (var i = 0; i < p.length; i++) {
+			for (var j = 0; j < p.length; j++) {
+				if (!p[i][j]) {
+					continue;
+				}
+				
+				var novoX = peca.x + j + x;
+				var novoY = peca.y + i + y;
+				
+				if (novoX < 0 || novoX >= COLUNA || novoY >= LINHA) {
+					return true;
+				}
+				
+				if (novoY < 0) {
+					continue;
+				}
+				
+				if (tabuleiro[novoY][novoX] != VAGO) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+	
+	function apagarPeca(){
+		preencherPeca(VAGO);
+	}
+	
+	function desenharPeca(){
+		preencherPeca(peca.cor);
+	}
+	
+	function preencherPeca(cor) {
+		for (var i = 0; i < peca.tetraminoAtivo.length; i++) {
+			for (var j = 0; j < peca.tetraminoAtivo.length; j++) {
+				if (peca.tetraminoAtivo[i][j]) {
+					desenharQuadrado(peca.x + j, peca.y + i, cor);
+				}
+			}
+		}
+	}
+	
+	function travarPeca(){
+		for (var i = 0; i < peca.tetraminoAtivo.length; i++) {
+			for (var j = 0; j < peca.tetraminoAtivo.length; j++) {
+				if (!peca.tetraminoAtivo[i][j]) {
+					continue;
+				}
+	
+				if (peca.y + i < 0) {
+					if (points >= 50){
+						alert("FIM DE JOGO😀​💪​​👾​👽​👺​🔥😂​")
+					}else {
+						alert("FIM DE JOGO🤢​🤮​🤯​😭​😪​😟​☹️💩​")
+					}
+
+					alert("Fim de Jogo");
+					fimDeJogo = true;
+					c.fillStyle = "black"
+					break;
+				}
+	
+				tabuleiro[peca.y+i][peca.x+j] = peca.cor;
+			}
+		}
+	
+		for (var i = 0; i < LINHA; i++) {
+			var linhaCheia = true;
+			
+			for (var j = 0; j < COLUNA; j++) {
+				linhaCheia = linhaCheia && (tabuleiro[i][j] != VAGO);
+			}
+			
+			if (linhaCheia) {
+				contador += 10
+				points.innerHTML = contador
+				for (var y = i; y > 1; y--) {
+					for (var j = 0; j < COLUNA; j++) {
+						tabuleiro[y][j] = tabuleiro[y-1][j];
+					}
+				}
+				
+				for (var j = 0; j < COLUNA; j++) {
+					tabuleiro[0][j] = VAGO;
+				}
+			}
+		}
+		
+		desenharTabuleiro();
+	}
+	
+	function rodarPeca(){
+		var proximoPadrao = peca.tetramino[(peca.tetraminoN + 1) % peca.tetramino.length];
+		var recuo = 0;
+		
+		if (colisao(0, 0, proximoPadrao)) {
+			if (peca.x > COLUNA/2) {
+				recuo = -1;
+			} else {
+				recuo = 1;
+			}
+		}
+		
+		if (!colisao(recuo, 0, proximoPadrao)) {
+			apagarPeca();
+			peca.x += recuo;
+			peca.tetraminoN = (peca.tetraminoN + 1) % peca.tetramino.length;
+			peca.tetraminoAtivo = peca.tetramino[peca.tetraminoN];
+			desenharPeca();
+		}
+	}
+	
+	function controlarPeca(evento){
+		var tecla = evento.keyCode;
+		
+		if (tecla == 37) {
+			moverEsquerda();
+			inicioDescida = Date.now();
+		} else if (tecla == 38) {
+			rodarPeca();
+			inicioDescida = Date.now();
+		} else if (tecla == 39) {
+			moverDireita();
+			inicioDescida = Date.now();
+		} else if (tecla == 40) {
+			moverAbaixo();
+		}
+		if (tecla == 65) {
+			moverEsquerda();
+			inicioDescida = Date.now();
+		} else if (tecla == 87 ) {
+			rodarPeca();
+			inicioDescida = Date.now();
+		} else if (tecla == 68 ) {
+			moverDireita();
+			inicioDescida = Date.now();
+		} else if (tecla == 83) {
+			moverAbaixo();
+		} else if (tecla == 82) {
+			reset();
+			
+		}
+	}
+	
+	</script>
+</body>
+</html>
